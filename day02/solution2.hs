@@ -22,8 +22,8 @@ isValid id = not $ hasAtLeastTwoRepeatingSequences $ show id
 hasAtLeastTwoRepeatingSequences :: String -> Bool
 hasAtLeastTwoRepeatingSequences x =
   let combinations = generateCombinations x
-      stringsToCheck = foldl (\acc y -> if rem (length x) (length y) == 0 then acc ++ [concat (replicate (length x `div` length y) y)]  else acc ) [] combinations
+      stringsToCheck = foldl (\acc y -> acc ++ [concat (replicate (length x `div` length y) y)]) [] combinations
   in elem x stringsToCheck
 
 generateCombinations :: String -> [String]
-generateCombinations x = map (`take` x) [1..length x `div` 2]
+generateCombinations x = map (`take` x) (filter (\y -> rem (length x) y == 0)[1..length x `div` 2])
