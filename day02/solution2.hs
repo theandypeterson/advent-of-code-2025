@@ -26,4 +26,4 @@ hasAtLeastTwoRepeatingSequences x =
   in elem x stringsToCheck
 
 generateCombinations :: String -> [String]
-generateCombinations x = map (`take` x) [1..length x - 1]
+generateCombinations x = map (`take` x) [1..length x `div` 2]
