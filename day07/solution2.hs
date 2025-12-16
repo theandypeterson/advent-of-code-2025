@@ -2,7 +2,7 @@
 import qualified Data.Map as Map
 import Data.List (elemIndex)
 import Distribution.Compat.Prelude (fromMaybe)
-import Data.Maybe (isNothing)
+import Data.Maybe (isNothing, isJust)
 main = do
   ((layout, width, height), starterCoor) <- readInputFile "input2.txt"
   printLayout (layout, width, height)
@@ -10,13 +10,14 @@ main = do
   printLayout x
   print starterCoor
   -- let getTimelines = memoize Map.empty $ timelines x
-  let getTimelines = timelines x
-  print $ getTimelines starterCoor
+  let getTimelines = timelines Map.empty x
+  print $ fst $ getTimelines starterCoor
 
 data NodeType = Empty | Splitter | Starter | Laser deriving (Show, Eq)
 
 type Coordinates = (Int, Int)
 type Layout = (Map.Map Coordinates NodeType, Int, Int)
+type Cache = (Map.Map Coordinates Int)
 
 readInputFile fileName = do
   contents <- readFile fileName
@@ -64,9 +65,23 @@ getNodeChar nodeType
   | nodeType == Just Starter = 'S'
   | otherwise = 'x'
 
-timelines :: Layout -> Coordinates -> Int
-timelines (layout, w, h) (x,y)
-  | c == Just Laser || c == Just Starter = timelines (layout, w, h) (x, y+1)
-  | c == Just Splitter = timelines (layout, w, h) (x-1, y) + timelines (layout, w, h) (x+1, y)
-  | isNothing c = 1
-  where c = Map.lookup (x,y) layout
+timelines :: Cache -> Layout -> Coordinates -> (Int, Cache)
+timelines cache lay@(layout, w, h) coor@(x,y) =
+  case Map.lookup coor cache of
+    Just v -> (v, cache)
+    Nothing ->
+      let (v, cache2) = compute cache
+          cache3 = Map.insert coor v cache2
+      in (v, cache3)
+      where
+        c = Map.lookup coor layout
+        compute :: Cache -> (Int, Cache)
+        compute c0
+          | c == Just Laser || c == Just Starter = timelines c0 (layout, w, h) (x, y+1)
+          | c == Just Splitter =
+            let (v1, c1) = timelines c0 (layout, w, h) (x-1, y)
+                (v2, c2) = timelines c1 (layout, w, h) (x+1, y)
+             in (v1 + v2, c2)
+          | isNothing c = (1, c0)
+  -- where c = Map.lookup (x,y) layout
+  --       cached = Map.lookup (x,y) cache
